@@ -8,8 +8,7 @@ on:
 
 env:
   AWS_REGION: ap-south-1
-  ACCOUNT_ID: 811738710312
-  ECR_REPOSITORY: strapi-task7
+  DOCKER_IMAGE: sivakrishna1107/strapi-task7
 
 jobs:
   deploy:
@@ -19,31 +18,24 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Generate Image Tag
+        run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build Docker Image
+        run: docker build -t $DOCKER_IMAGE:$IMAGE_TAG .
+
+      - name: Push Image
+        run: docker push $DOCKER_IMAGE:$IMAGE_TAG
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-
-      - name: Generate Image Tag
-        run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-
-      - name: Login to ECR
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build Docker Image
-        run: docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
-
-      - name: Tag Image
-        run: |
-          docker tag $ECR_REPOSITORY:$IMAGE_TAG \
-          $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
-
-      - name: Push Image
-        run: |
-          docker push \
-          $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -57,5 +49,6 @@ jobs:
         run: |
           cd terraform
           terraform apply -auto-approve \
-            -var="image_tag=$IMAGE_TAG"
+            -var="image_tag=$IMAGE_TAG" \
+            -var="docker_image=$DOCKER_IMAGE"
 
