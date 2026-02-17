@@ -1,12 +1,11 @@
-variable "image_tag" {
-  type = string
+variable "aws_region" {
+  default = "ap-south-1"
 }
 
 variable "docker_image" {
-  type = string
+  description = "Docker image URL"
 }
 
-variable "region" {
-  default = "us-east-1"
+variable "image_tag" {
+  default = "latest"
 }
-
