@@ -1,41 +1,47 @@
-resource "aws_ecs_cluster" "this" {
-  name = var.app_name
+resource "aws_ecs_cluster" "strapi_cluster" {
+  name = "strapi-cluster"
 }
 
-resource "aws_ecs_task_definition" "this" {
-  family                   = var.app_name
+resource "aws_iam_role" "ecs_task_execution_role" {
+  name = "ecsTaskExecutionRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "ecs-tasks.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_exec_policy" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_ecs_task_definition" "strapi" {
+  family                   = "strapi-task"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = "512"
-  memory                   = "1024"
-  execution_role_arn       = aws_iam_role.ecs_execution_role.arn
+  cpu                      = "256"
+  memory                   = "512"
+  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
 
   container_definitions = jsonencode([
     {
-      name      = var.app_name
-      image     = var.image_url
+      name      = "strapi"
+      image     = "${var.ecr_repository_url}:${var.image_tag}"
       essential = true
       portMappings = [
         {
           containerPort = 1337
-          hostPort      = 1337
+          protocol      = "tcp"
         }
       ]
     }
   ])
-}
-
-resource "aws_ecs_service" "this" {
-  name            = var.app_name
-  cluster         = aws_ecs_cluster.this.id
-  task_definition = aws_ecs_task_definition.this.arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
-
-  network_configuration {
-    subnets         = ["your-subnet-id"]
-    assign_public_ip = true
-    security_groups = ["your-sg-id"]
-  }
 }
 

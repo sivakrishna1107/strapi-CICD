@@ -1,12 +1,14 @@
-variable "region" {
+variable "aws_region" {
   default = "us-east-1"
 }
 
-variable "app_name" {
-  default = "strapi-task7"
+variable "image_tag" {
+  description = "Docker image tag"
+  type        = string
 }
 
-variable "image_url" {
-  description = "ami-0c1fe732b5494dc14"
+variable "ecr_repository_url" {
+  description = "ECR repository URL"
+  type        = string
 }
 
