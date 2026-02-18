@@ -3,7 +3,7 @@ name: Deploy Strapi to ECS
 on:
   push:
     branches:
-      - main   # change to master if your branch is master
+      - main
 
 env:
   AWS_REGION: us-east-1
