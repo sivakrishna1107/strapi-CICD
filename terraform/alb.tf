@@ -1,10 +1,15 @@
 resource "aws_lb" "strapi_alb" {
   name               = "strapi-alb"
-  internal           = false
   load_balancer_type = "application"
-  security_groups    = [aws_security_group.strapi_sg.id]
-  subnets            = [aws_subnet.public_1.id]
+
+  subnets = [
+    aws_subnet.public_1.id,
+    aws_subnet.public_2.id
+  ]
+
+  security_groups = [aws_security_group.strapi_sg.id]
 }
+
 
 resource "aws_lb_target_group" "strapi_tg" {
   name        = "strapi-tg"
